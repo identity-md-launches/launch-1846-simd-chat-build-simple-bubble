@@ -1,0 +1,9 @@
+{
+  "chainId": "",
+  "chainName": "",
+  "rpcUrl": "",
+  "tokenAddress": "",
+  "mintableTokens": [],
+  "wallets": [],
+  "blockWindow": 2000
+}
