@@ -4,8 +4,7 @@ import {
   byAmount,
   compactAmount,
   exactAmount,
-  percentage,
-  share,
+  supplyShare,
 } from "../model";
 import { palette } from "./BubbleMap";
 import { Icon } from "./Icon";
@@ -115,7 +114,7 @@ export function NodePanel({
                   <div>
                     <dt>Share of supply</dt>
                     <dd>
-                      {percentage(share(selected.amount, snapshot.totalSupply))}
+                      {supplyShare(selected.amount, snapshot.totalSupply)}
                     </dd>
                   </div>
                 ) : (
@@ -306,7 +305,7 @@ export function NodePanel({
                 </span>
                 <span className="rank-value">
                   {node.kind === "wallet"
-                    ? percentage(share(node.amount, snapshot.totalSupply))
+                    ? supplyShare(node.amount, snapshot.totalSupply)
                     : node.cap
                       ? compactAmount(node.amount, node.decimals)
                       : "Unknown"}

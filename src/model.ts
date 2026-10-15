@@ -33,6 +33,13 @@ export const percentage = (value: number) =>
   value > 0 && value < 0.01
     ? "<0.01%"
     : `${value.toLocaleString("en", { maximumFractionDigits: 2 })}%`;
+// Check the original integer amounts before the numeric share rounds away dust.
+export function supplyShare(amount: string, total: string): string {
+  const balance = BigInt(amount), supply = BigInt(total);
+  if (balance > 0n && supply > 0n && balance * 10000n < supply)
+    return "<0.01%";
+  return percentage(share(amount, total));
+}
 export function exactAmount(amount: string, decimals: number): string {
   const value = amount.padStart(decimals + 1, "0");
   if (!decimals) return value;
@@ -209,7 +216,7 @@ export function makeCsv(snapshot: Snapshot, nodes: MapNode[]) {
           : exactAmount(n.amount, n.decimals),
         n.symbol,
         n.kind === "wallet"
-          ? percentage(share(n.amount, snapshot.totalSupply))
+          ? supplyShare(n.amount, snapshot.totalSupply)
           : "",
         n.cluster + 1,
         snapshot.block,

@@ -4,9 +4,9 @@
 
 IMD Atlas is a read-only visual explorer for the IMD ecosystem. It pairs a large, interactive bubble map with holder rankings and a searchable data table. The visual idea is a calm research canvas: connected circles sit on a pale dot grid, with a restrained orange accent for the main action.
 
-The two hash-routed pages share the header, map, filters, node inspector, setup dialog and short guide. Overview introduces the map; Data explorer adds the complete filtered table and CSV export. The default diagram is explicitly illustrative. On-chain and saved snapshots have distinct source labels and timestamps.
+The two hash-routed pages share the header, map, filters, node inspector, setup dialog and short guide. Overview uses “Explore the IMD ecosystem” with the existing orange title emphasis. The shared guide uses task headings (“How to use the map”, “Filter by holding size”). Overview introduces the map; Data explorer adds the complete filtered table and CSV export. The default diagram is explicitly illustrative. On-chain and saved snapshots have distinct source labels and timestamps.
 
-Source of truth: `src/styles.css` for shared tokens/layout; `src/components/BubbleMap.tsx` for chart geometry and category colors; `src/App.tsx` for page composition.
+Source of truth: `src/styles.css` for shared tokens/layout; `src/map-layout.ts` for chart geometry and `src/components/BubbleMap.tsx` for category colors; `src/App.tsx` for page composition.
 
 ## Colors
 
@@ -62,7 +62,7 @@ Body line-height is 1.5; instructions and notes use 1.6–1.75. The title uses 1
 
 ## Layout
 
-The desktop page and header have a 1512px maximum width with 52px side padding. The map is the primary surface, with a 298px rankings/inspector column. Filters precede the map. The SVG keeps stable positions when a filter changes; its layout is recomputed only for a new snapshot or canvas size.
+The desktop page and header have a 1512px maximum width with 52px side padding. The map is the primary surface, with a 298px rankings/inspector column. Filters precede the map. The SVG keeps stable positions when a filter changes; its layout is recomputed only for a new snapshot or canvas size. Packing reserves 40px above and 60px below the nodes for the hint and zoom controls, with 12px side insets. A common radius scale derives from total bubble area and the usable rectangle. Cluster attraction stops before collision settling; only a verified fit is rendered. Dense layouts that cannot settle use a bounded grid with a common radius scale. The supported maximum is 80 wallets plus 8 token nodes; minimum 24px hit areas remain separate at initial fit.
 
 Spacing is primarily 4, 8, 12, 16, 20, 24, 28, 32, 40 and 52px. Smaller gaps join labels and their values; larger gaps separate sections. Layout is expressed with grid, flex and predominantly logical properties.
 
@@ -89,12 +89,12 @@ Main surfaces use `--radius: 12px`; buttons use 7px, text fields 6px, segmented 
 | --- | --- | --- |
 | Header and hash navigation | `src/App.tsx` | Brand returns home, active link has a line and weight change. Skip link focuses main without changing the route. |
 | Buttons | `src/styles.css` `.button`, `.primary`, `.secondary`, `.icon-button`, `.text-button` | Primary filled orange; secondary outlined; icon buttons have accessible names. Hover, press, disabled and focus states are explicit. |
-| `BubbleMap` | `src/components/BubbleMap.tsx` | Receives filtered nodes/edges plus all nodes for stable placement. Supports pointer pan, arrow-key pan, Home reset, button zoom, and Enter/Space node inspection. Empty results offer Reset filters. |
+| `BubbleMap` | `src/components/BubbleMap.tsx` | Receives filtered nodes/edges plus all nodes for stable placement. Supports pointer pan, arrow-key pan, Home reset, button zoom, and Enter/Space node inspection. Filtered-out results offer Reset filters. An empty snapshot instead says “No wallets found” and directs visitors to Edit addresses or a wider block range. |
 | Filter strip | `src/App.tsx` | Node type, query, share threshold, relationship and cluster filters intersect. Connection visibility does not change the underlying graph or relationship counts. Mobile filters expose the same controls. |
 | `NodePanel` | `src/components/NodePanel.tsx` | Ranking tabs support Left/Right/Home/End. Selected nodes expose full address, balance/capacity, exact values, connections and neighborhood focus. Copy success/failure is announced. |
 | `Modal` | `src/components/Modal.tsx` | Native dialog provides modal focus containment; Escape, close control and backdrop dismiss it. Focus returns to its trigger. Long forms scroll within the dialog. |
 | `Setup` | `src/components/Setup.tsx` | Labeled fields, validation on submit, field-specific errors, first-invalid-field focus. No wallet connection or signature. |
-| Source and read states | `src/App.tsx` | Illustration, loading/progress/cancel, on-chain snapshot, cached snapshot, partial coverage and retryable error states are distinct. Unknown values are never presented as known zero values. |
+| Source and read states | `src/App.tsx` | Illustration, loading/progress/cancel, on-chain snapshot, cached snapshot, partial coverage and retryable error states are distinct. Unknown values are never presented as known zero values. Positive supply shares below 0.01% display “<0.01%” from the original integer amounts, including in CSV; zero balances display “0%”. |
 | Explorer table | `src/App.tsx` | Uses the same filtered nodes as the map; every row opens the inspector. CSV exports this filtered set with exact values and data provenance. |
 
 Interactive transitions are 150ms, using `cubic-bezier(0.2, 0, 0, 1)` or an opacity ease-out. Pressed action controls scale to 0.96. Only the busy refresh icon loops. Motion is enclosed in `prefers-reduced-motion: no-preference`; reduced motion has no ongoing animation. There is no automatic map drift or entrance animation.

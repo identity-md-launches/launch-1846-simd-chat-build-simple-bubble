@@ -115,6 +115,8 @@ try {
   );
   await page.getByRole("link", { name: "Explore the ecosystem" }).click();
   await page.waitForURL("**/#/explorer");
+  await page.locator("tbody tr").first().waitFor();
+  await page.waitForFunction(() => document.activeElement?.tagName === "H1");
   ensure(
     (await page.locator("tbody tr").count()) === 29,
     "Explorer table should match map.",

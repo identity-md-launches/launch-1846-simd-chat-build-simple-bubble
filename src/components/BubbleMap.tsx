@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import type { MapNode, MapEdge } from "../types";
-import { compactAmount, percentage, share } from "../model";
+import { compactAmount, supplyShare } from "../model";
+import { arrange } from "../map-layout";
 import { Icon } from "./Icon";
 export const palette = [
   { fill: "#f9d8c9", stroke: "#d56b45", ink: "#75361f", dot: "#c85d36" },
@@ -9,107 +10,6 @@ export const palette = [
   { fill: "#dce8f6", stroke: "#82a6cd", ink: "#3d5a7a", dot: "#6b94bf" },
   { fill: "#f1e6c7", stroke: "#b69a53", ink: "#685520", dot: "#a18640" },
 ];
-interface Position {
-  node: MapNode;
-  x: number;
-  y: number;
-  r: number;
-  ax: number;
-  ay: number;
-}
-function arrange(nodes: MapNode[], width: number, height: number): Position[] {
-  if (!nodes.length) return [];
-  const scale = Math.min(1, width / 740);
-  const maximum = (kind: MapNode["kind"]) =>
-    nodes
-      .filter((n) => n.kind === kind)
-      .reduce((max, n) => {
-        const amount = Number(n.amount) / 10 ** n.decimals;
-        return Math.max(max, amount);
-      }, 1);
-  const maxima = { wallet: maximum("wallet"), token: maximum("token") };
-  const clusters = [
-    ...new Set(nodes.filter((n) => n.kind === "wallet").map((n) => n.cluster)),
-  ];
-  const count = clusters.length;
-  const anchors = [
-    [0.48, 0.47],
-    [0.21, 0.29],
-    [0.76, 0.72],
-    [0.79, 0.27],
-  ];
-  const ordered = [...nodes].sort(
-    (a, b) =>
-      Number(b.kind === "wallet") - Number(a.kind === "wallet") ||
-      Number(b.amount) / 10 ** b.decimals - Number(a.amount) / 10 ** a.decimals,
-  );
-  const clusterIndexes = new Map<number, number>();
-  let tokenIndex = 0;
-  const tokenCount = nodes.filter((n) => n.kind === "token").length;
-  const positions = ordered.map((node) => {
-    const i = clusterIndexes.get(node.cluster) || 0;
-    const c = clusters.indexOf(node.cluster);
-    const r = Math.max(
-      9,
-      (15 +
-        48 *
-          Math.sqrt(
-            Number(node.amount) / 10 ** node.decimals / maxima[node.kind],
-          )) *
-        scale *
-        (nodes.length > 45 ? 0.72 : 1),
-    );
-    let ax: number, ay: number, x: number, y: number;
-    if (node.kind === "token") {
-      ax = width * (0.22 + 0.56 * (++tokenIndex / (tokenCount + 1)));
-      ay = height * 0.85;
-      x = ax;
-      y = ay;
-    } else {
-      if (count <= 4) {
-        ax = width * anchors[Math.max(0, c)][0];
-        ay = height * anchors[Math.max(0, c)][1];
-      } else {
-        const columns = Math.ceil(Math.sqrt((count * width) / height));
-        ax = (((c % columns) + 0.5) * width) / columns;
-        ay =
-          ((Math.floor(c / columns) + 0.5) * height) /
-          Math.ceil(count / columns);
-      }
-      const theta = i * 2.399963;
-      const radius = i === 0 ? 0 : (67 + i * 12) * scale;
-      x = ax + Math.cos(theta) * radius;
-      y = ay + Math.sin(theta) * radius;
-      clusterIndexes.set(node.cluster, i + 1);
-    }
-    return { node, r, ax, ay, x, y };
-  });
-  for (let step = 0; step < 150; step++) {
-    for (let i = 0; i < positions.length; i++) {
-      const a = positions[i];
-      a.x += (a.ax - a.x) * 0.006;
-      a.y += (a.ay - a.y) * 0.006;
-      for (let j = i + 1; j < positions.length; j++) {
-        const b = positions[j];
-        const dx = b.x - a.x || 0.1,
-          dy = b.y - a.y || 0.1;
-        const distance = Math.hypot(dx, dy);
-        const min =
-          Math.max(a.r, 12) + Math.max(b.r, 12) + Math.max(4, 8 * scale);
-        if (distance < min) {
-          const push = ((min - distance) / distance) * 0.52;
-          a.x -= dx * push;
-          a.y -= dy * push;
-          b.x += dx * push;
-          b.y += dy * push;
-        }
-      }
-      a.x = Math.max(a.r + 18, Math.min(width - a.r - 18, a.x));
-      a.y = Math.max(a.r + 24, Math.min(height - a.r - 28, a.y));
-    }
-  }
-  return positions;
-}
 export function BubbleMap({
   nodes,
   allNodes,
@@ -310,7 +210,7 @@ export function BubbleMap({
                   key={node.id}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Inspect ${node.label}, ${node.kind === "wallet" ? `${percentage(share(node.amount, totalSupply))} of supply` : node.cap ? `${compactAmount(node.amount, node.decimals)} remaining capacity` : "capacity unknown"}`}
+                  aria-label={`Inspect ${node.label}, ${node.kind === "wallet" ? `${supplyShare(node.amount, totalSupply)} of supply` : node.cap ? `${compactAmount(node.amount, node.decimals)} remaining capacity` : "capacity unknown"}`}
                   aria-pressed={isSelected}
                   className={`bubble-node ${isSelected ? "selected-node" : ""}`}
                   onClick={(event) => {
@@ -364,7 +264,7 @@ export function BubbleMap({
                         className="node-label"
                       >
                         {node.kind === "wallet"
-                          ? percentage(share(node.amount, totalSupply))
+                          ? supplyShare(node.amount, totalSupply)
                           : node.label.length > 11
                             ? "Token"
                             : node.label}
@@ -393,11 +293,17 @@ export function BubbleMap({
       {!nodes.length && (
         <div className="map-empty">
           <Icon name="search" size={28} />
-          <h3>No matching nodes</h3>
-          <p>Try a smaller holding size or clear your filters.</p>
-          <button className="button secondary" onClick={onResetFilters}>
-            Reset filters
-          </button>
+          <h3>{allNodes.length ? "No matching nodes" : "No wallets found"}</h3>
+          <p>
+            {allNodes.length
+              ? "Try a smaller holding size or clear your filters."
+              : "Add wallet addresses or choose a wider block range in Edit addresses."}
+          </p>
+          {allNodes.length > 0 && (
+            <button className="button secondary" onClick={onResetFilters}>
+              Reset filters
+            </button>
+          )}
         </div>
       )}
       <div className="map-hint">

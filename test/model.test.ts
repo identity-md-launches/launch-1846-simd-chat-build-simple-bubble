@@ -11,6 +11,7 @@ import {
   makeCsv,
   selector,
   share,
+  supplyShare,
   validateConfig,
 } from "../src/model";
 import { blankConfig, defaultFilters, type MapNode } from "../src/types";
@@ -154,4 +155,18 @@ test("CSV preserves unknown token capacity and escapes spreadsheet formulas", ()
   assert.ok(csv.includes('"Unknown"'));
   assert.ok(csv.includes('"\'=DANGEROUS()"'));
   assert.ok(csv.includes('"illustration"'));
+});
+
+test("supply shares distinguish positive dust from zero at exact thresholds", () => {
+  assert.equal(supplyShare("0", "100000000"), "0%");
+  assert.equal(supplyShare("1", "100000000"), "<0.01%");
+  assert.equal(supplyShare("1", "1" + "0".repeat(77)), "<0.01%");
+  assert.equal(supplyShare("9999", "100000000"), "<0.01%");
+  assert.equal(supplyShare("10000", "100000000"), "0.01%");
+  assert.equal(supplyShare("10001", "100000000"), "0.01%");
+  assert.equal(supplyShare("18500000", "100000000"), "18.5%");
+  assert.equal(supplyShare("0", "0"), "0%");
+  const node = { ...illustration.nodes[0], amount: "1", decimals: 0 };
+  const csv = makeCsv({ ...illustration, totalSupply: "100000000" }, [node]);
+  assert.ok(csv.includes('"1","IMD","<0.01%"'));
 });

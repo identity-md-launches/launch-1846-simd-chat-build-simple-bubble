@@ -10,8 +10,7 @@ import {
   compactAmount,
   downloadCsv,
   filterGraph,
-  percentage,
-  share,
+  supplyShare,
   validateConfig,
 } from "./model";
 import { loadSnapshot } from "./rpc";
@@ -250,7 +249,7 @@ function App() {
             <h1 ref={intro} tabIndex={-1}>
               {page === "home" ? (
                 <>
-                  Every connection, <span>in view.</span>
+                  Explore the <span>IMD ecosystem</span>
                 </>
               ) : (
                 "Data explorer"
@@ -730,9 +729,7 @@ function App() {
                         </td>
                         <td>
                           {node.kind === "wallet"
-                            ? percentage(
-                                share(node.amount, snapshot.totalSupply),
-                              )
+                            ? supplyShare(node.amount, snapshot.totalSupply)
                             : "Not comparable"}
                         </td>
                         <td>{node.cluster + 1}</td>
@@ -770,7 +767,7 @@ function App() {
         )}
         <section className="quick-guide" aria-labelledby="guide-heading">
           <div className="guide-heading">
-            <h2 id="guide-heading">A little context. A clearer map.</h2>
+            <h2 id="guide-heading">How to use the map</h2>
             <button className="text-button" onClick={() => setModal("help")}>
               Read the guide
               <Icon name="arrow" size={16} />
@@ -782,7 +779,7 @@ function App() {
                 <Icon name="wallet" size={22} />
               </span>
               <div>
-                <h3>Size tells a story</h3>
+                <h3>Filter by holding size</h3>
                 <p>
                   Larger wallet bubbles hold more tokens. Use holding size to
                   find the balances that matter to you.

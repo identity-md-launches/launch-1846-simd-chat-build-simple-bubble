@@ -87,9 +87,10 @@ Wallet balances that fail to load are omitted rather than set to zero. Partial c
 Final commands were run after the last source changes:
 
 - `npm run typecheck`: passed.
-- `npm test`: **23 tests passed**, including precision, filter intersections, graph components, checksum validation, RPC failures, range splitting, block consistency, dual-role contract nodes and cache corruption.
+- `npm test`: **41 tests passed**, including dense-map geometry through 88 nodes, tiny-share thresholds, precision, filter intersections, graph components, checksum validation, RPC failures, range splitting, block consistency, dual-role contract nodes and cache corruption.
 - `npm run build`: passed; the resulting export is in `dist/`.
 - `scripts/validate-browser.mjs`: **18 groups passed**: Chromium interaction, responsive and accessibility checks, using the production export under `/preview/`. See `artifacts/interaction-report.json` for the final results.
+- `scripts/validate-revision.mjs`: passed the four review reproductions. All **243 center clicks** selected the intended node across 320/390/1440px; no overlapping circles or center-hit misses. Tiny shares, CSV, empty saved snapshots, recovery through Edit addresses, and both pages’ guide headings passed. Before/after results are in `artifacts/revision-before.json` and `artifacts/revision-after.json`.
 - Pinned `taste.mjs`: design probe at 320, 390 and 1440px, including reduced motion. **16/16 passed**. Final results are in `artifacts/design-probe.json` and `artifacts/validation.md`.
 
 The browser runner uses controlled RPC responses for loading, wrong-network, success, cache and cancellation scenarios. These are test fixtures, not verification of actual IMD contracts. No actual IMD balance scan was possible without supplied contracts. WebKit was attempted but could not launch due to missing system libraries. No physical-device or manual screen-reader session was performed.
@@ -103,9 +104,10 @@ export PLAYWRIGHT_BROWSERS_PATH="$CHECK_DIR/browsers"
 "$CHECK_DIR/node_modules/.bin/playwright" install chromium webkit
 export IMD_PLAYWRIGHT="$CHECK_DIR/node_modules/playwright/index.mjs"
 node scripts/validate-browser.mjs
+node scripts/validate-revision.mjs
 ```
 
-The runner starts and closes its own bounded preview server. Reports and screenshots go only to `test/scratch/interaction/`. Browser system libraries must be installed by the environment. Native zoom uses a temporary Chromium test extension and profile outside the repository. When the assignment's pinned probe is present, run:
+The runner starts and closes its own bounded preview server. Reports and screenshots go to `test/scratch/interaction/` and `test/scratch/revision/`. The revision runner intercepts its `.invalid` RPC fixture locally; it never sends that fixture to a real chain. Use `--baseline` to observe the old behavior without asserting the fixes. Selected final reports and screenshots are copied to `artifacts/` for review. Browser system libraries must be installed by the environment. Native zoom uses a temporary Chromium test extension and profile outside the repository. When the assignment's pinned probe is present, run:
 
 ```sh
 node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste
@@ -117,6 +119,7 @@ The pinned inputs are not part of the delivered application. They are not requir
 
 - `src/App.tsx`: pages, shared filters, state and read orchestration.
 - `src/components/`: map, inspector, setup and accessible native dialog.
+- `src/map-layout.ts`: area-aware radius scaling, collision settling and dense-map fallback.
 - `src/rpc.ts`: bounded on-chain reader.
 - `src/model.ts`: exact units, filters, graph components, validation and CSV.
 - `src/storage.ts`: configuration and snapshot cache.
